@@ -1,5 +1,7 @@
 c_compiler:
-- vs2022
+- clang
+c_compiler_version:
+- '23.1'
 c_stdlib:
 - vs
 channel_sources:
@@ -8,17 +10,9 @@ channel_targets:
 - conda-forge main
 gmp:
 - '6'
-m2w64_c_compiler:
-- gcc
-m2w64_c_compiler_version:
-- '15'
-m2w64_c_stdlib:
-- m2w64-sysroot
-m2w64_c_stdlib_version:
-- '12'
 mpfr:
 - '4'
 target_platform:
-- win-64
+- win-arm64
 vc:
 - '14'
