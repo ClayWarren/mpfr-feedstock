@@ -1,0 +1,74 @@
+Use Clang GNU-driver options with MSVC-style libtool on Windows ARM64.
+The generated configure and its macro sources are changed together.
+MPFR does not need the GNU-ld-only output-def option because libtool
+already produces the MSVC import library (also addressed by vcpkg).
+
+--- a/configure
++++ b/configure
+@@ -12248,14 +12248,14 @@
+ 	# Tell ltmain to make .dll files, not .so files.
+ 	shrext_cmds=.dll
+ 	# FIXME: Setting linknames here is a bad hack.
+-	archive_cmds='$CC -Fe$output_objdir/$soname $libobjs $compiler_flags $deplibs -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.dll.lib"~linknames='
++	archive_cmds='$CC -o $output_objdir/$soname $libobjs $compiler_flags $deplibs -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.dll.lib"~linknames='
+ 	archive_expsym_cmds='if   test DEF = "`$SED -n     -e '\''s/^[	 ]*//'\''     -e '\''/^\(;.*\)*$/d'\''     -e '\''s/^\(EXPORTS\|LIBRARY\)\([	 ].*\)*$/DEF/p'\''     -e q     $export_symbols`" ; then
+             cp "$export_symbols" "$output_objdir/$soname.def";
+             echo "$tool_output_objdir$soname.def" > "$output_objdir/$soname.exp";
+           else
+-            $SED -e '\''s/^/-link -EXPORT:/'\'' < $export_symbols > $output_objdir/$soname.exp;
++            $SED -e '\''s/^/-Xlinker -EXPORT:/'\'' < $export_symbols > $output_objdir/$soname.exp;
+           fi~
+-          $CC -Fe$tool_output_objdir$soname $libobjs $compiler_flags $deplibs "@$tool_output_objdir$soname.exp" -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.dll.lib"~
++          $CC -o $tool_output_objdir$soname $libobjs $compiler_flags $deplibs "@$tool_output_objdir$soname.exp" -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.dll.lib"~
+           linknames='
+ 	# The linker will not automatically build a static lib if we build a DLL.
+ 	# _LT_TAGVAR(old_archive_from_new_cmds, )='true'
+@@ -19731,7 +19731,7 @@
+ printf %s "checking for DLL/static GMP... " >&6; }
+    if test "$enable_shared" = yes; then
+      MPFR_LDFLAGS="$MPFR_LDFLAGS -no-undefined"
+-     LIBMPFR_LDFLAGS="$LIBMPFR_LDFLAGS -Wl,--output-def,.libs/libmpfr-6.dll.def"
++     # MSVC-style libtool generates the import library; LLD has no --output-def.
+      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
+ 
+--- a/m4/libtool.m4
++++ b/m4/libtool.m4
+@@ -5756,14 +5756,14 @@
+ 	# Tell ltmain to make .dll files, not .so files.
+ 	shrext_cmds=.dll
+ 	# FIXME: Setting linknames here is a bad hack.
+-	_LT_TAGVAR(archive_cmds, $1)='$CC -Fe$output_objdir/$soname $libobjs $compiler_flags $deplibs -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.dll.lib"~linknames='
++	_LT_TAGVAR(archive_cmds, $1)='$CC -o $output_objdir/$soname $libobjs $compiler_flags $deplibs -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.dll.lib"~linknames='
+ 	_LT_TAGVAR(archive_expsym_cmds, $1)='if _LT_DLL_DEF_P([$export_symbols]); then
+             cp "$export_symbols" "$output_objdir/$soname.def";
+             echo "$tool_output_objdir$soname.def" > "$output_objdir/$soname.exp";
+           else
+-            $SED -e '\''s/^/-link -EXPORT:/'\'' < $export_symbols > $output_objdir/$soname.exp;
++            $SED -e '\''s/^/-Xlinker -EXPORT:/'\'' < $export_symbols > $output_objdir/$soname.exp;
+           fi~
+-          $CC -Fe$tool_output_objdir$soname $libobjs $compiler_flags $deplibs "@$tool_output_objdir$soname.exp" -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.dll.lib"~
++          $CC -o $tool_output_objdir$soname $libobjs $compiler_flags $deplibs "@$tool_output_objdir$soname.exp" -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.dll.lib"~
+           linknames='
+ 	# The linker will not automatically build a static lib if we build a DLL.
+ 	# _LT_TAGVAR(old_archive_from_new_cmds, $1)='true'
+@@ -6842,7 +6842,7 @@
+               cp "$export_symbols" "$output_objdir/$soname.def";
+               echo "$tool_output_objdir$soname.def" > "$output_objdir/$soname.exp";
+             else
+-              $SED -e '\''s/^/-link -EXPORT:/'\'' < $export_symbols > $output_objdir/$soname.exp;
++              $SED -e '\''s/^/-Xlinker -EXPORT:/'\'' < $export_symbols > $output_objdir/$soname.exp;
+             fi~
+             $CC -o $tool_output_objdir$soname $libobjs $compiler_flags $deplibs "@$tool_output_objdir$soname.exp" -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.dll.lib"~
+             linknames='
+--- a/configure.ac
++++ b/configure.ac
+@@ -637,7 +637,7 @@
+    AC_MSG_CHECKING(for DLL/static GMP)
+    if test "$enable_shared" = yes; then
+      MPFR_LDFLAGS="$MPFR_LDFLAGS -no-undefined"
+-     LIBMPFR_LDFLAGS="$LIBMPFR_LDFLAGS -Wl,--output-def,.libs/libmpfr-6.dll.def"
++     # MSVC-style libtool generates the import library; LLD has no --output-def.
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+ #include "gmp.h"
+ #if !__GMP_LIBGMP_DLL

@@ -12,10 +12,12 @@ source:
   fn: mpfr-{{ version }}.tar.bz2
   url: http://ftp.gnu.org/gnu/mpfr/mpfr-{{ version }}.tar.gz
   sha256: 826cbb24610bd193f36fde172233fb8c009f3f5c2ad99f644d0dea2e16a20e42
+  patches:
+    - patches/0001-native-clang-windows-linking.patch  # [win and arm64]
 
 build:
-  number: 1
-  skip: true  # [win and vc<14]
+  number: 2
+  skip: true  # [win and not arm64 and vc<14]
   run_exports:
     - {{ pin_subpackage("mpfr") }}
 
@@ -27,24 +29,27 @@ requirements:
     - {{ posix }}make
     - {{ posix }}base             # [build_platform.startswith("win-")]
     - {{ posix }}diffutils        # [build_platform.startswith("win-")]
-    - {{ compiler('c') }}         # [unix]
-    - {{ stdlib('c') }}           # [unix]
-    - {{ compiler('m2w64_c') }}   # [win]
-    - {{ stdlib('m2w64_c') }}     # [win]
+    - {{ compiler('c') }}         # [unix or arm64]
+    - {{ stdlib('c') }}           # [unix or arm64]
+    - {{ compiler('m2w64_c') }}   # [win and not arm64]
+    - {{ stdlib('m2w64_c') }}     # [win and not arm64]
   host:
     - gmp
 
 test:
+  files:
+    - test-native.c  # [win]
   requires:
-    - {{ compiler('c') }}         # [unix]
-    - {{ stdlib('c') }}           # [unix]
-    - {{ compiler('m2w64_c') }}   # [win]
-    - {{ stdlib('m2w64_c') }}     # [win]
+    - {{ compiler('c') }}       
+    - {{ stdlib('c') }}         
+    - {{ compiler('m2w64_c') }}   # [win and not arm64]
+    - {{ stdlib('m2w64_c') }}     # [win and not arm64]
 
   commands:
     - if not exist %LIBRARY_INC%\\mpfr.h exit 1                # [win]
     - if not exist %LIBRARY_LIB%\\mpfr.lib exit 1              # [win]
-    - if not exist %LIBRARY_BIN%\\libmpfr-6.dll exit 1         # [win]
+    - if not exist %LIBRARY_BIN%\\libmpfr-6.dll exit 1         # [win and not arm64]
+    - if not exist %LIBRARY_BIN%\\mpfr-6.dll exit 1         # [win and arm64]
     - test -f ${PREFIX}/lib/libmpfr${SHLIB_EXT}                # [unix]
 
 about:
