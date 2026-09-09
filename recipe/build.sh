@@ -11,7 +11,8 @@ extra_configure_args=()
 if [[ "$target_platform" == "win-arm64" ]]; then
   set -e
   # MSYS2 runs under x64 emulation; the compiler and all tests are native ARM64.
-  extra_configure_args=(--build=aarch64-pc-mingw32 --host=aarch64-pc-mingw32)
+  # Use the patched release configure script without regenerating Autotools files.
+  extra_configure_args=(--build=aarch64-pc-mingw32 --host=aarch64-pc-mingw32 --disable-maintainer-mode)
   export CFLAGS="${CFLAGS} -std=gnu17"
   export PATH="$PWD/src/.libs:$PATH"
 fi
