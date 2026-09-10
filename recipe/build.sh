@@ -24,7 +24,11 @@ fi
 
 make -j${CPU_COUNT}
 if [[ "$CONDA_BUILD_CROSS_COMPILATION" != 1 && "${CROSSCOMPILING_EMULATOR}" == "" ]]; then
-  make check
+  if [[ "$target_platform" == "win-arm64" ]]; then
+    make check -j${CPU_COUNT}
+  else
+    make check
+  fi
 fi
 make install
 
